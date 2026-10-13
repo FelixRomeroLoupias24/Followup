@@ -1,0 +1,127 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Sistema de diseño — paleta modo oscuro (diseño/sistema-diseño.md §6.1) */
+:root {
+  color-scheme: dark;            /* Controles nativos (select, scrollbars) también oscuros */
+
+  --primary: #22C55E;            /* Verde: botones primarios, ítem activo del sidebar */
+  --primary-hover: #16A34A;      /* Verde: hover/active */
+  --secondary: #94A3B8;          /* Botones secundarios, íconos. §6.1 no define secundario: usa el gris claro de la tabla */
+  --danger: #F87171;             /* Rojo: venta perdida, sin seguimiento — solo urgencia */
+  --warning: #FBBF24;            /* Ámbar: "Contactar hoy" — solo urgencia */
+  --success: #34D399;            /* Verde esmeralda: lead convertido */
+  --background: #0B0F0E;         /* Fondo general */
+  --sidebar: #080A09;            /* Fondo del menú lateral */
+  --card: #141B19;               /* Fondo de cards, tabla, modales */
+  --accent: #1C2422;             /* Hover de filas, ítem activo del sidebar */
+  --foreground: #F1F5F9;         /* Texto principal */
+  --muted-foreground: #94A3B8;   /* Texto secundario */
+  --border: #263230;             /* Bordes y divisores */
+
+  /* Alias que esperan los componentes de shadcn — apuntan a los tokens de arriba */
+  --primary-foreground: var(--card);
+  --secondary-foreground: var(--card);
+  --destructive: var(--danger);
+  --muted: var(--accent);
+  --accent-foreground: var(--foreground);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --input: var(--border);
+  --ring: var(--primary);
+}
+
+/* Expone los tokens como clases de Tailwind: bg-primary, text-danger, border-border, etc. */
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-destructive: var(--destructive);
+  --color-background: var(--background);
+  --color-sidebar: var(--sidebar);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Inter la carga next/font en app/layout.tsx (variable --font-inter) */
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+/* Sistema de diseño — tipografía (diseño/sistema-diseño.md §2)
+   Clases de Tailwind: text-h1, text-h2, text-body, text-small, text-caption, text-kpi
+   (cada una aplica tamaño y peso). En CSS: var(--text-h1), var(--text-h1--font-weight). */
+@theme static {
+  --text-h1: 28px;               /* Título de página ("Dashboard", "Mis leads") */
+  --text-h1--font-weight: 700;
+  --text-h2: 20px;               /* Títulos de sección / tarjetas de métrica */
+  --text-h2--font-weight: 600;
+  --text-body: 14px;             /* Texto general, filas de tabla */
+  --text-body--font-weight: 400;
+  --text-small: 13px;            /* Metadatos, fechas */
+  --text-small--font-weight: 400;
+  --text-caption: 12px;          /* Labels de estado, badges */
+  --text-caption--font-weight: 400;
+  --text-kpi: 32px;              /* Cifras grandes del dashboard */
+  --text-kpi--font-weight: 700;
+}
+
+/* Sistema de diseño — badges de estado de lead (§4.1 adaptado a modo oscuro según la nota de §6.1):
+   fondo = versión oscurecida del color de alerta, texto = el color de alerta.
+   §6.1 solo da el fondo de "Venta perdida"; los otros siguen el mismo criterio (contraste ≥ 5:1).
+   Clases: bg-estado-nuevo text-estado-nuevo-foreground, etc. */
+:root {
+  --estado-nuevo: var(--accent);
+  --estado-nuevo-foreground: var(--muted-foreground);
+  --estado-seguimiento: #172B4A;
+  --estado-seguimiento-foreground: #60A5FA;
+  --estado-hoy: #3D2E0B;
+  --estado-hoy-foreground: var(--warning);
+  --estado-perdido: #3F1D1D;
+  --estado-perdido-foreground: var(--danger);
+  --estado-convertido: #0F3A2B;
+  --estado-convertido-foreground: var(--success);
+}
+
+@theme inline {
+  --color-estado-nuevo: var(--estado-nuevo);
+  --color-estado-nuevo-foreground: var(--estado-nuevo-foreground);
+  --color-estado-seguimiento: var(--estado-seguimiento);
+  --color-estado-seguimiento-foreground: var(--estado-seguimiento-foreground);
+  --color-estado-hoy: var(--estado-hoy);
+  --color-estado-hoy-foreground: var(--estado-hoy-foreground);
+  --color-estado-perdido: var(--estado-perdido);
+  --color-estado-perdido-foreground: var(--estado-perdido-foreground);
+  --color-estado-convertido: var(--estado-convertido);
+  --color-estado-convertido-foreground: var(--estado-convertido-foreground);
+}
+
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    font-weight: var(--text-body--font-weight);
+  }
+  h1 { font-size: var(--text-h1); font-weight: var(--text-h1--font-weight); }
+  h2 { font-size: var(--text-h2); font-weight: var(--text-h2--font-weight); }
+  button:not(:disabled), select:not(:disabled) { cursor: pointer; }
+}

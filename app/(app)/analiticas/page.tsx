@@ -1,0 +1,59 @@
+import {
+  GraficoConvertidos,
+  GraficoEstados,
+  GraficoLeadsNuevos,
+  GraficoTasa,
+  GraficoVentas,
+} from '@/components/analitica/graficos'
+import { KpiCard } from '@/components/dashboard/kpi-card'
+import { formatoDias } from '@/lib/analitica/formato'
+import { contarLeadsPorEstado } from '@/lib/analitica/leads-por-estado'
+import {
+  obtenerSerieMensual,
+  obtenerSerieSemanal,
+  obtenerTicketPromedio,
+  obtenerTiempoPromedioConversion,
+} from '@/lib/analitica/datos'
+import { obtenerLeads } from '@/lib/leads/datos'
+import { formatoMonto } from '@/lib/metricas'
+
+export default async function AnaliticasPage() {
+  const hoy = new Date()
+  const [serieMensual, serieSemanal, tiempoPromedioConversion, leads] = await Promise.all([
+    obtenerSerieMensual(hoy),
+    obtenerSerieSemanal(hoy),
+    obtenerTiempoPromedioConversion(),
+    obtenerLeads(),
+  ])
+  const mesActual = serieMensual[serieMensual.length - 1]
+  const ticketPromedio = obtenerTicketPromedio(serieMensual)
+  const porEstado = contarLeadsPorEstado(leads, hoy)
+
+  return (
+    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 md:gap-8 md:px-8 md:py-8">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-foreground">Analíticas</h1>
+        <p className="text-small text-muted-foreground">Cómo evolucionan tus ventas y tu seguimiento mes a mes.</p>
+      </div>
+
+      <section className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3" aria-label="Resumen">
+        {/* El monto a ancho completo en mobile, igual que en el Dashboard */}
+        <KpiCard className="col-span-2 lg:col-span-1" label="Ticket promedio" valor={formatoMonto(ticketPromedio)} />
+        <KpiCard label="Leads convertidos este mes" valor={String(mesActual.leadsConvertidos)} tono="conversion" />
+        {/* null = todavía no hay ningún lead convertido con fechas válidas */}
+        <KpiCard
+          label="Tiempo promedio hasta conversión"
+          valor={tiempoPromedioConversion === null ? '—' : formatoDias(tiempoPromedioConversion)}
+        />
+      </section>
+
+      <section className="grid gap-6 md:gap-8 lg:grid-cols-2" aria-label="Gráficos">
+        <GraficoVentas datos={serieMensual} />
+        <GraficoTasa datos={serieMensual} />
+        <GraficoEstados datos={porEstado} />
+        <GraficoLeadsNuevos datos={serieSemanal} />
+        <GraficoConvertidos datos={serieMensual} />
+      </section>
+    </main>
+  )
+}
