@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { crearClienteNavegador } from '@/lib/supabase/client'
 
-// Sin registro: la app es de un solo usuario, que ya existe en Supabase Auth
+// Login con email y contraseña. La cuenta se crea en la pestaña "Crear cuenta" (registro-form.tsx)
 export function LoginForm({ volver }: { volver: string }) {
   const router = useRouter()
   const [email, setEmail] = useState('')

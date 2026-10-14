@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { MessageCircle } from 'lucide-react'
 
-import { LoginForm } from '@/components/auth/login-form'
+import { Acceso } from '@/components/auth/acceso'
 
-export const metadata: Metadata = { title: 'Iniciar sesión — FollowUp' }
+export const metadata: Metadata = { title: 'Iniciar sesión o crear cuenta — FollowUp' }
 
 // Solo rutas internas: evita que ?volver= mande a otro sitio después de iniciar sesión
 function destinoSeguro(volver: string | string[] | undefined): string {
@@ -17,14 +17,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div className="flex justify-center">
           <span className="grid size-12 place-items-center rounded-xl bg-primary text-primary-foreground">
             <MessageCircle className="size-6" aria-hidden />
           </span>
-          <h1 className="text-foreground">Iniciar sesión</h1>
-          <p className="text-small text-muted-foreground">Entrá a FollowUp para ver tus leads y recordatorios.</p>
         </div>
-        <LoginForm volver={destinoSeguro(volver)} />
+        <Acceso volver={destinoSeguro(volver)} />
       </div>
     </main>
   )
