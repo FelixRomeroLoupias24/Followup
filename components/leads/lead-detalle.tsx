@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useTransition, type ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, type ReactNode } from 'react'
 import { AlertTriangle, MessageSquareQuote, Phone } from 'lucide-react'
 
 import { GeneradorMensaje } from '@/components/leads/generador-mensaje'
@@ -9,10 +8,10 @@ import { LeadAvatar } from '@/components/leads/lead-avatar'
 import { ESTILO_ESTADO, LeadStatusBadge } from '@/components/leads/lead-status-badge'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { NativeSelect } from '@/components/ui/native-select'
+import { useAcciones } from '@/lib/datos/acciones'
 import { conEtapa, ETAPAS, estadoVisual, textoProximoContacto, textoUltimoContacto } from '@/lib/leads/estado'
 import type { Etapa, Lead } from '@/lib/leads/types'
 import type { Plantilla } from '@/lib/plantillas/plantilla'
-import { crearClienteNavegador } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
 // Ficha del lead: encabezado, datos de la consulta, generador IA y el historial (que llega ya renderizado)
@@ -27,13 +26,12 @@ export function LeadDetalle({
   diasSinSeguimiento: number
   plantillas: Plantilla[]
 }) {
-  const router = useRouter()
-  // Solo se guarda la etapa optimista, no una copia del lead: así, después del refresh, se ve el lead tal como
-  // quedó en la base (con lo que hayan tocado los triggers). Un useState(lead) ignoraría los props nuevos.
+  const acciones = useAcciones()
+  // Solo se guarda la etapa optimista, no una copia del lead: así, después de guardar, se ve el lead tal como
+  // quedó en ProveedorDemo (con el recordatorio limpio si se cerró). Un useState(lead) ignoraría los props nuevos.
   const [etapaOptimista, setEtapaOptimista] = useState<Etapa | null>(null)
   const [guardandoEtapa, setGuardandoEtapa] = useState(false)
   const [errorEtapa, setErrorEtapa] = useState<string | null>(null)
-  const [refrescando, iniciarRefresco] = useTransition()
 
   const lead = etapaOptimista ? conEtapa(leadServidor, etapaOptimista) : leadServidor
   const hoy = new Date()
@@ -42,29 +40,24 @@ export function LeadDetalle({
 
   async function cambiarEtapa(etapa: Etapa) {
     const etapaAnterior = lead.etapa
-    // Optimista: el select, el badge y el próximo contacto cambian ya, sin esperar a la base
+    // Optimista: el select, el badge y el próximo contacto cambian ya, sin esperar a que se guarde
     setEtapaOptimista(etapa)
     setGuardandoEtapa(true)
     setErrorEtapa(null)
 
-    // Los triggers hacen el resto: limpian proximo_contacto / cerrado_at y registran el cambio en interacciones
-    const { error } = await crearClienteNavegador().from('leads').update({ etapa }).eq('id', lead.id)
+    // ProveedorDemo hace el resto: limpia el próximo contacto al cerrar y registra el cambio en el historial
+    const ok = await acciones.cambiarEtapa(lead.id, etapa)
     setGuardandoEtapa(false)
 
-    if (error) {
-      console.error('No se pudo guardar la etapa:', error.message)
+    if (!ok) {
       setErrorEtapa('No se pudo guardar el cambio de etapa.')
-      // Volver a la etapa anterior (la que sigue teniendo el lead en la base)
+      // Volver a la etapa anterior (la que sigue teniendo el lead guardado)
       setEtapaOptimista(etapaAnterior === leadServidor.etapa ? null : etapaAnterior)
       return
     }
 
-    // Pedir de nuevo el lead y el historial al servidor. La etapa optimista se suelta en la misma transición,
-    // así no hay un parpadeo a la etapa vieja mientras llegan los datos nuevos. También refresca la campanita.
-    iniciarRefresco(() => {
-      router.refresh()
-      setEtapaOptimista(null)
-    })
+    // El lead guardado ya llega por props con la etapa nueva (y la campanita se actualiza sola)
+    setEtapaOptimista(null)
   }
 
   return (
@@ -88,12 +81,12 @@ export function LeadDetalle({
           <label htmlFor="etapa-lead" className="text-caption text-muted-foreground">
             Etapa
           </label>
-          {/* Deshabilitado hasta que la base confirme y lleguen los datos nuevos: dos cambios no se pisan */}
+          {/* Deshabilitado mientras se guarda: dos cambios no se pisan */}
           <NativeSelect
             id="etapa-lead"
             value={lead.etapa}
             onChange={(e) => cambiarEtapa(e.target.value as Etapa)}
-            disabled={guardandoEtapa || refrescando}
+            disabled={guardandoEtapa}
             aria-describedby={errorEtapa ? 'etapa-error' : undefined}
             className="w-full disabled:opacity-60 sm:w-48"
           >

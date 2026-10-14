@@ -1,12 +1,10 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import {
   ChartColumn,
   LayoutDashboard,
-  LogOut,
   MessageCircle,
   MessageSquareText,
   Settings,
@@ -15,7 +13,6 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-import { crearClienteNavegador } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
 type ItemNav = { href: string; texto: string; icono: LucideIcon; activo: (ruta: string) => boolean }
@@ -43,16 +40,6 @@ export function Sidebar({
   nombreNegocio: string
 }) {
   const ruta = usePathname()
-  const router = useRouter()
-  const [saliendo, setSaliendo] = useState(false)
-
-  async function cerrarSesion() {
-    setSaliendo(true)
-    await crearClienteNavegador().auth.signOut()
-    // replace: que "atrás" no vuelva a una pantalla protegida; refresh: que el servidor vea la sesión cerrada
-    router.replace('/login')
-    router.refresh()
-  }
 
   return (
     <>
@@ -60,7 +47,7 @@ export function Sidebar({
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-sidebar transition-transform',
+          'fixed top-(--alto-aviso,0px) bottom-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-sidebar transition-transform',
           // Cerrado en mobile: fuera de pantalla e invisible (así no recibe foco con Tab)
           abierto ? 'visible translate-x-0' : 'invisible -translate-x-full lg:visible lg:translate-x-0',
         )}
@@ -123,15 +110,6 @@ export function Sidebar({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={cerrarSesion}
-            disabled={saliendo}
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-body text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
-          >
-            <LogOut className="size-4" aria-hidden />
-            {saliendo ? 'Cerrando sesión…' : 'Cerrar sesión'}
-          </button>
         </div>
       </aside>
     </>

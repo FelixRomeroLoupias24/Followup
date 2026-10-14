@@ -8,7 +8,7 @@ import { PanelNotificaciones, type Recordatorio } from '@/components/layout/pane
 // Logo y usuario viven en el sidebar (diseño/sistema-diseño.md §6.2).
 export function Header({ recordatorios, onAbrirMenu }: { recordatorios: Recordatorio[]; onAbrirMenu: () => void }) {
   return (
-    <header className="sticky top-0 z-30 bg-background">
+    <header className="sticky top-(--alto-aviso,0px) z-30 bg-background">
       <div className="mx-auto flex h-14 max-w-6xl items-center px-4 md:px-8">
         <button
           type="button"

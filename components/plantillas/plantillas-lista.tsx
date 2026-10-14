@@ -7,11 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { plantillasMock } from '@/lib/plantillas/mock'
+import { useAcciones, type BorradorPlantilla as Borrador } from '@/lib/datos/acciones'
 import { MARCADOR_NOMBRE, type Plantilla } from '@/lib/plantillas/plantilla'
-import { crearClienteNavegador } from '@/lib/supabase/client'
-
-type Borrador = { id?: string; nombre: string; texto: string }
 
 const ERROR_GUARDAR = 'No se pudo guardar la plantilla. Probá de nuevo.'
 
@@ -25,9 +22,10 @@ function AvisoError({ children }: { children: ReactNode }) {
   )
 }
 
-// Lista + alta/edición/baja de plantillas contra la tabla `plantillas` de Supabase.
-// La lista local se actualiza con lo que devuelve la base (no antes), así nunca muestra algo que no se guardó.
+// Lista + alta/edición/baja de plantillas (guardadas en memoria por ProveedorDemo).
+// La lista local se actualiza con lo que devuelve el guardado (no antes), así nunca muestra algo que no se guardó.
 export function PlantillasLista({ iniciales }: { iniciales: Plantilla[] }) {
+  const acciones = useAcciones()
   const [plantillas, setPlantillas] = useState(iniciales)
   const [borrador, setBorrador] = useState<Borrador | null>(null)
   const [confirmandoBorrar, setConfirmandoBorrar] = useState<string | null>(null)
@@ -36,18 +34,8 @@ export function PlantillasLista({ iniciales }: { iniciales: Plantilla[] }) {
 
   // Devuelve un mensaje de error para mostrar en el formulario, o null si salió bien
   async function guardar(b: Borrador): Promise<string | null> {
-    const supabase = crearClienteNavegador()
-    // Solo nombre y texto: id, user_id y fechas los completa la base (permisos por columna)
-    const consulta = b.id
-      ? supabase.from('plantillas').update({ nombre: b.nombre, texto: b.texto }).eq('id', b.id)
-      : supabase.from('plantillas').insert({ nombre: b.nombre, texto: b.texto })
-    const { data, error } = await consulta.select('id, nombre, texto').single()
-
-    if (error || !data) {
-      console.error('No se pudo guardar la plantilla:', error?.message)
-      return ERROR_GUARDAR
-    }
-    const guardada = data as Plantilla
+    const guardada = await acciones.guardarPlantilla(b)
+    if (!guardada) return ERROR_GUARDAR
     setPlantillas((ps) => (b.id ? ps.map((p) => (p.id === guardada.id ? guardada : p)) : [guardada, ...ps]))
     setBorrador(null)
     return null
@@ -56,10 +44,9 @@ export function PlantillasLista({ iniciales }: { iniciales: Plantilla[] }) {
   async function eliminar(id: string) {
     setOcupado(true)
     setErrorLista(null)
-    const { error } = await crearClienteNavegador().from('plantillas').delete().eq('id', id)
+    const ok = await acciones.eliminarPlantilla(id)
     setOcupado(false)
-    if (error) {
-      console.error('No se pudo eliminar la plantilla:', error.message)
+    if (!ok) {
       setErrorLista('No se pudo eliminar la plantilla. Probá de nuevo.')
       return
     }
@@ -71,17 +58,13 @@ export function PlantillasLista({ iniciales }: { iniciales: Plantilla[] }) {
   async function cargarEjemplos() {
     setOcupado(true)
     setErrorLista(null)
-    const { data, error } = await crearClienteNavegador()
-      .from('plantillas')
-      .insert(plantillasMock.map(({ nombre, texto }) => ({ nombre, texto })))
-      .select('id, nombre, texto')
+    const cargadas = await acciones.cargarPlantillasEjemplo()
     setOcupado(false)
-    if (error || !data) {
-      console.error('No se pudieron cargar las plantillas de ejemplo:', error?.message)
+    if (!cargadas) {
       setErrorLista('No se pudieron cargar las plantillas de ejemplo. Probá de nuevo.')
       return
     }
-    setPlantillas(data as Plantilla[])
+    setPlantillas(cargadas)
   }
 
   const creando = borrador !== null && !borrador.id

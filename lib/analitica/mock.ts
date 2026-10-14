@@ -1,4 +1,5 @@
 import { obtenerLeadsMock } from '@/lib/leads/mock'
+import type { Lead } from '@/lib/leads/types'
 import { calcularMetricas } from '@/lib/metricas'
 
 export type PuntoMensual = {
@@ -35,9 +36,9 @@ function nombreMes(desplazamiento: number, hoy: Date): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 
-// Últimos 6 meses. El mes actual sale de los mismos leads que el Dashboard, así ambos coinciden.
-export function obtenerSerieMensual(hoy = new Date()): PuntoMensual[] {
-  const leads = obtenerLeadsMock()
+// Últimos 6 meses. El mes actual sale de los mismos leads que el Dashboard, así ambos coinciden
+// (la demo pasa sus leads en memoria, con los cambios que haya hecho el visitante).
+export function obtenerSerieMensual(hoy = new Date(), leads: Lead[] = obtenerLeadsMock()): PuntoMensual[] {
   const actual = calcularMetricas(leads, hoy)
 
   const historico = HISTORICO.map((m, i) => ({
@@ -71,8 +72,7 @@ export function obtenerSerieSemanal(hoy = new Date()): PuntoSemanal[] {
 }
 
 // Monto total convertido ÷ cantidad de conversiones, sobre los últimos 6 meses
-export function obtenerTicketPromedio(hoy = new Date()): number {
-  const serie = obtenerSerieMensual(hoy)
+export function obtenerTicketPromedio(serie: PuntoMensual[] = obtenerSerieMensual()): number {
   const conversiones = serie.reduce((total, m) => total + m.leadsConvertidos, 0)
   const monto = serie.reduce((total, m) => total + m.ventaConvertida, 0)
   return conversiones ? monto / conversiones : 0

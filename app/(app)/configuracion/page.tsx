@@ -1,13 +1,16 @@
+'use client'
+
 import {
   SeccionCuenta,
   SeccionNegocio,
   SeccionRecordatorios,
   SeccionWhatsApp,
 } from '@/components/configuracion/secciones'
-import { obtenerCuenta } from '@/lib/cuenta/datos'
+import { useDemo } from '@/components/demo/proveedor-demo'
 
-export default async function ConfiguracionPage() {
-  const cuenta = await obtenerCuenta()
+// Configuración de la cuenta de ejemplo (ProveedorDemo)
+export default function DemoConfiguracionPage() {
+  const { cuenta } = useDemo()
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6 md:gap-8 md:px-8 md:py-8">

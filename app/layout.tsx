@@ -47,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={inter.variable}>
       <body className="antialiased">
-        {/* Sidebar, header y chequeo de sesión: app/(app)/layout.tsx. /login queda afuera. */}
+        {/* Cartel de demo, sidebar y header: app/(app)/layout.tsx */}
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

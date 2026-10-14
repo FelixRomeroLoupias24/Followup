@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
 import { AlertTriangle, Check, MessageCircle } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
@@ -11,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Switch } from '@/components/ui/switch'
 import { RUBROS, type Cuenta, type Rubro } from '@/lib/cuenta/mock'
-import { crearClienteNavegador } from '@/lib/supabase/client'
+import { useAcciones } from '@/lib/datos/acciones'
 
 // ---------------------------------------------------------------------------------------------------------------
 // Piezas comunes
@@ -50,21 +49,6 @@ function AvisoError({ children }: { children: ReactNode }) {
 
 const AVISO_GUARDADO = 'Cambios guardados.'
 const ERROR_GUARDADO = 'No se pudo guardar. Probá de nuevo.'
-
-type CambiosConfiguracion = Partial<{
-  nombre_negocio: string
-  rubro: Rubro
-  dias_sin_seguimiento: number
-  notificaciones_vencidos: boolean
-}>
-
-// Una fila por usuario: upsert la crea la primera vez y después la actualiza. user_id lo pone la base (auth.uid())
-// y solo se mandan las columnas de la sección, así guardar una no pisa los valores de la otra.
-async function guardarConfiguracion(cambios: CambiosConfiguracion): Promise<boolean> {
-  const { error } = await crearClienteNavegador().from('configuracion_negocio').upsert(cambios, { onConflict: 'user_id' })
-  if (error) console.error('No se pudo guardar la configuración:', error.message)
-  return !error
-}
 
 function Seccion({ titulo, descripcion, children }: { titulo: string; descripcion?: string; children: ReactNode }) {
   return (
@@ -114,7 +98,7 @@ function PieGuardar({ deshabilitado }: { deshabilitado?: boolean }) {
 // 1. Datos de mi negocio
 
 export function SeccionNegocio({ cuenta }: { cuenta: Cuenta }) {
-  const router = useRouter()
+  const { guardarConfiguracion } = useAcciones()
   const [nombre, setNombre] = useState(cuenta.nombreNegocio)
   const [rubro, setRubro] = useState<Rubro>(cuenta.rubro)
   const [intento, setIntento] = useState(false)
@@ -129,15 +113,15 @@ export function SeccionNegocio({ cuenta }: { cuenta: Cuenta }) {
     if (guardando || !nombre.trim()) return
     setGuardando(true)
     setErrorGuardado(null)
+    // Solo las columnas de esta sección, así guardar una no pisa los valores de la otra
     const ok = await guardarConfiguracion({ nombre_negocio: nombre.trim(), rubro })
     setGuardando(false)
     if (!ok) {
       setErrorGuardado(ERROR_GUARDADO)
       return
     }
+    // El sidebar muestra el nombre nuevo solo: lee la cuenta de ProveedorDemo
     aviso.mostrar()
-    // El layout compartido no se vuelve a pedir al navegar: refrescar para que el sidebar muestre el nombre nuevo
-    router.refresh()
   }
 
   return (
@@ -172,6 +156,7 @@ export function SeccionNegocio({ cuenta }: { cuenta: Cuenta }) {
 // 2. Recordatorios
 
 export function SeccionRecordatorios({ cuenta }: { cuenta: Cuenta }) {
+  const { guardarConfiguracion } = useAcciones()
   const [dias, setDias] = useState(String(cuenta.diasSinSeguimiento))
   const [notificaciones, setNotificaciones] = useState(cuenta.notificacionesVencidos)
   const [intento, setIntento] = useState(false)
@@ -284,12 +269,11 @@ export function SeccionCuenta({ cuenta }: { cuenta: Cuenta }) {
         <dd className="text-body text-foreground">{cuenta.email}</dd>
       </dl>
       <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-        {/* TODO: conectar a backend — supabase.auth.resetPasswordForEmail / updateUser cuando haya login */}
         <Button variant="secondary" onClick={() => setAvisoClave(true)} className="w-full sm:w-auto">
           Cambiar contraseña
         </Button>
       </div>
-      {avisoClave && <Aviso>Vas a poder cambiar la contraseña cuando activemos el inicio de sesión.</Aviso>}
+      {avisoClave && <Aviso>En la versión demo no hay contraseña para cambiar.</Aviso>}
     </Seccion>
   )
 }

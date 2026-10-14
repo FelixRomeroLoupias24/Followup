@@ -10,13 +10,10 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
+import { useAcciones, type NuevoLead } from '@/lib/datos/acciones'
 import { ETAPAS, estaCerrado } from '@/lib/leads/estado'
-import type { Etapa, Lead } from '@/lib/leads/types'
-import { crearClienteNavegador } from '@/lib/supabase/client'
+import type { Etapa } from '@/lib/leads/types'
 import { cn } from '@/lib/utils'
-
-// Los campos que el frontend puede enviar al crear un lead (backend/supabase/README.md)
-type NuevoLead = Pick<Lead, 'nombre' | 'telefono' | 'consulta' | 'etapa' | 'proximoContacto' | 'monto'>
 
 type Campos = { nombre: string; telefono: string; consulta: string; etapa: Etapa; proximoContacto: string; monto: string }
 type Errores = Partial<Record<keyof Campos, string>>
@@ -38,7 +35,7 @@ function fechaLocal(valor: string): Date {
   return new Date(anio, mes - 1, dia)
 }
 
-// Date local → "2026-10-08", el formato de una columna `date` (sin pasar por UTC)
+// Date local → "2026-10-08", el formato de un input date (sin pasar por UTC)
 function aFechaIso(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
@@ -49,6 +46,7 @@ function hoyIso(): string {
 
 export function NuevoLeadForm() {
   const router = useRouter()
+  const acciones = useAcciones()
   const [campos, setCampos] = useState<Campos>(VACIO)
   const [intentoEnviar, setIntentoEnviar] = useState(false)
   const [guardando, setGuardando] = useState(false)
@@ -81,22 +79,9 @@ export function NuevoLeadForm() {
     // Mientras viaja el insert el botón queda deshabilitado: un doble clic crearía el lead dos veces
     setGuardando(true)
     setErrorGuardado(null)
-    // Solo estas columnas: id, user_id, cerrado_at, etc. los completa la base (permisos por columna)
-    const { data, error } = await crearClienteNavegador()
-      .from('leads')
-      .insert({
-        nombre: lead.nombre,
-        telefono: lead.telefono,
-        consulta: lead.consulta,
-        etapa: lead.etapa,
-        monto: lead.monto,
-        proximo_contacto: lead.proximoContacto ? aFechaIso(lead.proximoContacto) : null,
-      })
-      .select('id')
-      .single()
+    const id = await acciones.crearLead(lead)
 
-    if (error || !data) {
-      console.error('No se pudo guardar el lead:', error?.message)
+    if (!id) {
       setErrorGuardado('No se pudo guardar el lead. Revisá tu conexión y probá de nuevo.')
       setGuardando(false)
       return
@@ -104,7 +89,7 @@ export function NuevoLeadForm() {
 
     setEnviado(true)
     // Unos segundos para que se lea la confirmación; después, directo a la ficha del lead nuevo
-    setTimeout(() => router.push(`/leads/${data.id}`), 1500)
+    setTimeout(() => router.push(`/leads/${id}`), 1500)
   }
 
   return (

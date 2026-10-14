@@ -1,3 +1,5 @@
+'use client'
+
 import {
   GraficoConvertidos,
   GraficoEstados,
@@ -6,6 +8,7 @@ import {
   GraficoVentas,
 } from '@/components/analitica/graficos'
 import { KpiCard } from '@/components/dashboard/kpi-card'
+import { useDemo } from '@/components/demo/proveedor-demo'
 import { formatoDias } from '@/lib/analitica/formato'
 import { contarLeadsPorEstado } from '@/lib/analitica/leads-por-estado'
 import {
@@ -13,18 +16,16 @@ import {
   obtenerSerieSemanal,
   obtenerTicketPromedio,
   obtenerTiempoPromedioConversion,
-} from '@/lib/analitica/datos'
-import { obtenerLeads } from '@/lib/leads/datos'
+} from '@/lib/analitica/mock'
 import { formatoMonto } from '@/lib/metricas'
 
-export default async function AnaliticasPage() {
+// Los meses anteriores salen del histórico de ejemplo
+// (lib/analitica/mock.ts); el mes actual y los estados, de los leads de la demo (con los cambios del visitante).
+export default function DemoAnaliticasPage() {
+  const { leads } = useDemo()
   const hoy = new Date()
-  const [serieMensual, serieSemanal, tiempoPromedioConversion, leads] = await Promise.all([
-    obtenerSerieMensual(hoy),
-    obtenerSerieSemanal(hoy),
-    obtenerTiempoPromedioConversion(),
-    obtenerLeads(),
-  ])
+  const serieMensual = obtenerSerieMensual(hoy, leads)
+  const serieSemanal = obtenerSerieSemanal(hoy)
   const mesActual = serieMensual[serieMensual.length - 1]
   const ticketPromedio = obtenerTicketPromedio(serieMensual)
   const porEstado = contarLeadsPorEstado(leads, hoy)
@@ -37,14 +38,9 @@ export default async function AnaliticasPage() {
       </div>
 
       <section className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3" aria-label="Resumen">
-        {/* El monto a ancho completo en mobile, igual que en el Dashboard */}
         <KpiCard className="col-span-2 lg:col-span-1" label="Ticket promedio" valor={formatoMonto(ticketPromedio)} />
         <KpiCard label="Leads convertidos este mes" valor={String(mesActual.leadsConvertidos)} tono="conversion" />
-        {/* null = todavía no hay ningún lead convertido con fechas válidas */}
-        <KpiCard
-          label="Tiempo promedio hasta conversión"
-          valor={tiempoPromedioConversion === null ? '—' : formatoDias(tiempoPromedioConversion)}
-        />
+        <KpiCard label="Tiempo promedio hasta conversión" valor={formatoDias(obtenerTiempoPromedioConversion())} />
       </section>
 
       <section className="grid gap-6 md:gap-8 lg:grid-cols-2" aria-label="Gráficos">

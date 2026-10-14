@@ -10,7 +10,7 @@ import { ESTILO_ESTADO } from '@/components/leads/lead-status-badge'
 import type { EstadoVisual } from '@/lib/leads/estado'
 import { cn } from '@/lib/utils'
 
-// Lo que necesita el panel de cada lead; lo arma el servidor (app/layout.tsx) con estadoVisual y textoProximoContacto
+// Lo que necesita el panel de cada lead; lo arma ProveedorDemo con estadoVisual y textoProximoContacto
 export type Recordatorio = { id: string; nombre: string; estado: EstadoVisual; texto: string }
 
 // Campanita + panel desplegable. Base UI se encarga de cerrar al clickear afuera o con Escape;
